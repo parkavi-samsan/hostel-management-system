@@ -1,16 +1,24 @@
-# React + Vite
+# Hostel Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack MERN application for managing hostel operations — room allocation, maintenance requests, resident billing, and role-based access for admins, staff, and residents.
 
-Currently, two official plugins are available:
+## Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend (Netlify):** https://jazzy-lolly-9debdf.netlify.app
+- **Backend (Render):** https://hostel-management-system-6e7v.onrender.com
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React (Vite), Tailwind CSS, React Router, Axios
+- **Backend:** Node.js, Express
+- **Database:** MongoDB (Atlas) with Mongoose
+- **Auth:** JWT, bcrypt
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Auth:** Register/login with JWT, role-based access (admin, staff, resident)
+- **Rooms:** Admin can add rooms; everyone can view room list, type, capacity, rent, and status
+- **Maintenance:** Residents raise requests; admin/staff can view all requests and update status (pending → in-progress → resolved)
+- **Billing:** Admin generates bills per resident per month; residents view their bills; bills can be marked as paid
+
+## Project Structure
