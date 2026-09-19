@@ -84,4 +84,4 @@ hostel-management-system/
 │
 ├── package.json
 ├── package-lock.json
-└── README.md
+└── readme.md

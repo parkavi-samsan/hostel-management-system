@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Maintenance() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [error, setError] = useState('');
@@ -56,6 +57,11 @@ function Maintenance() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
@@ -63,7 +69,7 @@ function Maintenance() {
           <h1 className="text-2xl font-bold text-blue-600">Maintenance Requests</h1>
           <div className="flex gap-3">
             <Link to="/dashboard" className="text-blue-600 hover:underline">Dashboard</Link>
-            <button onClick={logout} className="text-red-500 hover:underline">Logout</button>
+            <button onClick={handleLogout} className="text-red-500 hover:underline">Logout</button>
           </div>
         </div>
 
