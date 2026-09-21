@@ -7,7 +7,10 @@ A full-stack web application designed to simplify and manage hostel operations e
 The Hostel Management System provides a centralized platform for managing hostel-related activities such as user authentication, room management, billing, and maintenance requests.
 
 The application follows a client-server architecture with a React frontend and Node.js/Express backend connected to MongoDB.
+## 🔗 Live Demo
 
+- **Frontend (Netlify):** https://jazzy-lolly-9debdf.netlify.app
+- **Backend (Render):** https://hostel-management-system-6e7v.onrender.com
 ## ✨ Features
 
 - 🔐 User Registration and Login
