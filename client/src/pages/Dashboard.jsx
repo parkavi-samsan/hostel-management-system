@@ -11,52 +11,79 @@ function Dashboard() {
     navigate("/login");
   };
 
+  const cards = [
+    {
+      title: "Rooms",
+      desc: "View and manage room allocation",
+      icon: "🛏️",
+      color: "from-blue-500 to-blue-600",
+      path: "/rooms"
+    },
+    {
+      title: "Maintenance",
+      desc: "Track and update maintenance requests",
+      icon: "🔧",
+      color: "from-emerald-500 to-emerald-600",
+      path: "/maintenance"
+    },
+    {
+      title: "Billing",
+      desc: "Manage resident bills and payments",
+      icon: "💰",
+      color: "from-purple-500 to-purple-600",
+      path: "/billing"
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-blue-600 mb-4">
-          Hostel Dashboard
-        </h1>
-
-        {user ? (
-          <div className="mb-6">
-            <p className="text-lg">
-              Welcome, <span className="font-semibold">{user.name}</span> 👋
-            </p>
-            <p className="text-gray-600">Role: {user.role}</p>
-            <p className="text-gray-600">Email: {user.email}</p>
-          </div>
-        ) : (
-          <p className="text-red-500">No user info available</p>
-        )}
-
-        <div className="flex gap-4 mb-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <nav className="bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-5xl mx-auto flex justify-between items-center px-6 py-4">
+          <h1 className="text-xl font-bold text-indigo-700">🏨 Hostel Management</h1>
           <button
-            onClick={() => navigate("/rooms")}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={handleLogout}
+            className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition"
           >
-            Rooms
-          </button>
-          <button
-            onClick={() => navigate("/maintenance")}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          >
-            Maintenance
-          </button>
-          <button
-            onClick={() => navigate("/billing")}
-            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
-          >
-            Billing
+            Logout
           </button>
         </div>
+      </nav>
 
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Logout
-        </button>
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        {/* Welcome card */}
+        {user ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-semibold text-gray-800">
+                Welcome back, {user.name} 👋
+              </p>
+              <p className="text-gray-500 mt-1">{user.email}</p>
+            </div>
+            <span className="capitalize bg-indigo-50 text-indigo-700 text-sm font-medium px-4 py-1.5 rounded-full">
+              {user.role}
+            </span>
+          </div>
+        ) : (
+          <p className="text-red-500 mb-8">No user info available</p>
+        )}
+
+        {/* Feature cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {cards.map((c) => (
+            <button
+              key={c.title}
+              onClick={() => navigate(c.path)}
+              className="text-left bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:-translate-y-0.5 transition transform"
+            >
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-2xl mb-4`}>
+                {c.icon}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800">{c.title}</h3>
+              <p className="text-sm text-gray-500 mt-1">{c.desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
