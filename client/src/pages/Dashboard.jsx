@@ -12,6 +12,13 @@ function Dashboard() {
   };
 
   const cards = [
+    ...(user?.role === 'admin' ? [{
+      title: "Residents",
+      desc: "View all registered residents",
+      icon: "👤",
+      color: "from-orange-500 to-orange-600",
+      path: "/residents"
+    }] : []),
     {
       title: "Rooms",
       desc: "View and manage room allocation",

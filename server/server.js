@@ -12,6 +12,7 @@ const authRoutes = require("./routes/authRoutes.js");
 const roomRoutes = require("./routes/roomRoutes.js");
 const maintenanceRoutes = require("./routes/maintenanceRoutes.js");
 const billingRoutes = require("./routes/billingRoutes.js");
+const residentRoutes = require("./routes/residentRoutes.js");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/residents", residentRoutes);
 
 // Test route
 app.get("/api/test", (req, res) => {

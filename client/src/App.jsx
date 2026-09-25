@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Rooms from "./pages/Rooms";
 import Maintenance from "./pages/Maintenance";
 import Billing from "./pages/Billing";
+import Residents from "./pages/Residents";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -50,6 +51,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/residents"
+            element={
+              <ProtectedRoute>
+                <Residents />
               </ProtectedRoute>
             }
           />
