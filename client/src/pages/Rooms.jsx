@@ -7,9 +7,13 @@ function Rooms() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
+  const [residents, setResidents] = useState([]);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState({ roomNumber: '', type: 'single', capacity: 1, monthlyRent: '' });
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [checkInRoom, setCheckInRoom] = useState(null);
+  const [selectedResident, setSelectedResident] = useState('');
 
   const fetchRooms = async () => {
     try {
@@ -20,7 +24,19 @@ function Rooms() {
     }
   };
 
-  useEffect(() => { fetchRooms(); }, []);
+  const fetchResidents = async () => {
+    try {
+      const res = await api.get('/residents');
+      setResidents(res.data);
+    } catch (err) {
+      // staff may not have access; ignore silently
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+    if (user?.role === 'admin') fetchResidents();
+  }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -38,11 +54,60 @@ function Rooms() {
     setError('');
     if (!validate()) return;
     try {
-      await api.post('/rooms', form);
+      if (editingRoom) {
+        await api.put(`/rooms/${editingRoom}`, form);
+        setEditingRoom(null);
+      } else {
+        await api.post('/rooms', form);
+      }
       setForm({ roomNumber: '', type: 'single', capacity: 1, monthlyRent: '' });
       fetchRooms();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add room');
+      setError(err.response?.data?.message || 'Failed to save room');
+    }
+  };
+
+  const startEdit = (room) => {
+    setEditingRoom(room._id);
+    setForm({ roomNumber: room.roomNumber, type: room.type, capacity: room.capacity, monthlyRent: room.monthlyRent });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingRoom(null);
+    setForm({ roomNumber: '', type: 'single', capacity: 1, monthlyRent: '' });
+    setFieldErrors({});
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this room? This cannot be undone.')) return;
+    try {
+      await api.delete(`/rooms/${id}`);
+      fetchRooms();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete room');
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (!selectedResident) return;
+    try {
+      await api.put(`/rooms/${checkInRoom}/checkin`, { residentId: selectedResident });
+      setCheckInRoom(null);
+      setSelectedResident('');
+      fetchRooms();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to check in resident');
+    }
+  };
+
+  const handleCheckOut = async (roomId, residentId) => {
+    if (!window.confirm('Check out this resident?')) return;
+    try {
+      await api.put(`/rooms/${roomId}/checkout`, { residentId });
+      fetchRooms();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to check out resident');
     }
   };
 
@@ -69,7 +134,7 @@ function Rooms() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         {user?.role === 'admin' && (
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-            <h2 className="font-semibold text-gray-800 mb-4">Add New Room</h2>
+            <h2 className="font-semibold text-gray-800 mb-4">{editingRoom ? 'Edit Room' : 'Add New Room'}</h2>
             <div className="flex flex-wrap gap-4 items-start">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Room Number</label>
@@ -97,9 +162,16 @@ function Rooms() {
                   className={`border rounded-lg px-3 py-2 text-sm w-28 ${fieldErrors.monthlyRent ? 'border-red-400' : 'border-gray-300'}`} />
                 {fieldErrors.monthlyRent && <p className="text-red-500 text-xs mt-1">{fieldErrors.monthlyRent}</p>}
               </div>
-              <button type="submit" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition mt-5">
-                Add Room
-              </button>
+              <div className="flex gap-2 mt-5">
+                <button type="submit" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+                  {editingRoom ? 'Save Changes' : 'Add Room'}
+                </button>
+                {editingRoom && (
+                  <button type="button" onClick={cancelEdit} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         )}
@@ -115,22 +187,70 @@ function Rooms() {
                 <th className="p-4">Capacity</th>
                 <th className="p-4">Rent</th>
                 <th className="p-4">Status</th>
+                <th className="p-4">Occupants</th>
+                {user?.role === 'admin' && <th className="p-4">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {rooms.length === 0 ? (
-                <tr><td colSpan="5" className="p-6 text-center text-gray-400">No rooms added yet</td></tr>
+                <tr><td colSpan="7" className="p-6 text-center text-gray-400">No rooms added yet</td></tr>
               ) : rooms.map((room) => (
-                <tr key={room._id} className="border-t border-gray-100 hover:bg-gray-50">
+                <tr key={room._id} className="border-t border-gray-100 hover:bg-gray-50 align-top">
                   <td className="p-4 font-medium">{room.roomNumber}</td>
                   <td className="p-4 capitalize">{room.type}</td>
-                  <td className="p-4">{room.capacity}</td>
+                  <td className="p-4">{room.occupants.length}/{room.capacity}</td>
                   <td className="p-4">₹{room.monthlyRent}</td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[room.status] || 'bg-gray-100 text-gray-700'}`}>
                       {room.status}
                     </span>
                   </td>
+                  <td className="p-4">
+                    {room.occupants.length === 0 ? (
+                      <span className="text-gray-400 text-xs">None</span>
+                    ) : (
+                      <ul className="space-y-1">
+                        {room.occupants.map((o) => (
+                          <li key={o._id} className="flex items-center gap-2 text-xs">
+                            {o.name}
+                            {user?.role === 'admin' && (
+                              <button onClick={() => handleCheckOut(room._id, o._id)}
+                                className="text-red-500 hover:underline">
+                                checkout
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                  {user?.role === 'admin' && (
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1.5">
+                        {room.occupants.length < room.capacity && (
+                          checkInRoom === room._id ? (
+                            <div className="flex flex-col gap-1">
+                              <select value={selectedResident} onChange={(e) => setSelectedResident(e.target.value)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs">
+                                <option value="">Select resident</option>
+                                {residents
+                                  .filter((r) => !room.occupants.some((o) => o._id === r._id))
+                                  .map((r) => <option key={r._id} value={r._id}>{r.name}</option>)}
+                              </select>
+                              <div className="flex gap-1">
+                                <button onClick={handleCheckIn} className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Confirm</button>
+                                <button onClick={() => { setCheckInRoom(null); setSelectedResident(''); }} className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button onClick={() => setCheckInRoom(room._id)} className="text-indigo-600 hover:underline text-xs text-left">+ Check-in resident</button>
+                          )
+                        )}
+                        <button onClick={() => startEdit(room)} className="text-blue-600 hover:underline text-xs text-left">Edit</button>
+                        <button onClick={() => handleDelete(room._id)} className="text-red-600 hover:underline text-xs text-left">Delete</button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
