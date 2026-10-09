@@ -12,13 +12,22 @@ function Dashboard() {
   };
 
   const cards = [
-    ...(user?.role === 'admin' ? [{
-      title: "Residents",
-      desc: "View all registered residents",
-      icon: "👤",
-      color: "from-orange-500 to-orange-600",
-      path: "/residents"
-    }] : []),
+    ...(user?.role === 'admin' ? [
+      {
+        title: "Residents",
+        desc: "View all registered residents",
+        icon: "👤",
+        color: "from-orange-500 to-orange-600",
+        path: "/residents"
+      },
+      {
+        title: "User Management",
+        desc: "Manage roles and account status",
+        icon: "⚙️",
+        color: "from-slate-600 to-slate-700",
+        path: "/users"
+      }
+    ] : []),
     {
       title: "Rooms",
       desc: "View and manage room allocation",
@@ -44,7 +53,6 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
       <nav className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-5xl mx-auto flex justify-between items-center px-6 py-4">
           <h1 className="text-xl font-bold text-indigo-700">🏨 Hostel Management</h1>
@@ -58,7 +66,6 @@ function Dashboard() {
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* Welcome card */}
         {user ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex items-center justify-between">
             <div>
@@ -75,7 +82,6 @@ function Dashboard() {
           <p className="text-red-500 mb-8">No user info available</p>
         )}
 
-        {/* Feature cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {cards.map((c) => (
             <button

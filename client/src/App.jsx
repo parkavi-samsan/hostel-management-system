@@ -8,6 +8,7 @@ import Rooms from "./pages/Rooms";
 import Maintenance from "./pages/Maintenance";
 import Billing from "./pages/Billing";
 import Residents from "./pages/Residents";
+import Users from "./pages/Users";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -59,6 +60,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Residents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users />
               </ProtectedRoute>
             }
           />

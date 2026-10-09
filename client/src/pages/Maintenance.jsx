@@ -8,9 +8,12 @@ function Maintenance() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState({ roomId: '', issue: '', priority: 'medium' });
+  const [noteDrafts, setNoteDrafts] = useState({});
+  const [expanded, setExpanded] = useState({});
 
   const fetchRequests = async () => {
     try {
@@ -28,9 +31,17 @@ function Maintenance() {
     } catch (err) {}
   };
 
+  const fetchStaff = async () => {
+    try {
+      const res = await api.get('/maintenance/staff-list');
+      setStaff(res.data);
+    } catch (err) {}
+  };
+
   useEffect(() => {
     fetchRequests();
     if (user?.role === 'resident') fetchRooms();
+    if (user?.role === 'admin') fetchStaff();
   }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -63,6 +74,28 @@ function Maintenance() {
       fetchRequests();
     } catch (err) {
       setError('Failed to update');
+    }
+  };
+
+  const assignStaff = async (id, staffId) => {
+    if (!staffId) return;
+    try {
+      await api.put(`/maintenance/${id}`, { assignedTo: staffId });
+      fetchRequests();
+    } catch (err) {
+      setError('Failed to assign staff');
+    }
+  };
+
+  const addNote = async (id) => {
+    const note = (noteDrafts[id] || '').trim();
+    if (!note) return;
+    try {
+      await api.put(`/maintenance/${id}`, { updateNote: note });
+      setNoteDrafts({ ...noteDrafts, [id]: '' });
+      fetchRequests();
+    } catch (err) {
+      setError('Failed to add note');
     }
   };
 
@@ -129,46 +162,88 @@ function Maintenance() {
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
-              <tr>
-                {user?.role !== 'resident' && <th className="p-4">Resident</th>}
-                <th className="p-4">Room</th>
-                <th className="p-4">Issue</th>
-                <th className="p-4">Priority</th>
-                <th className="p-4">Status</th>
-                {user?.role !== 'resident' && <th className="p-4">Action</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {requests.length === 0 ? (
-                <tr><td colSpan="6" className="p-6 text-center text-gray-400">No requests yet</td></tr>
-              ) : requests.map((r) => (
-                <tr key={r._id} className="border-t border-gray-100 hover:bg-gray-50">
-                  {user?.role !== 'resident' && <td className="p-4">{r.residentId?.name}</td>}
-                  <td className="p-4">{r.roomId?.roomNumber}</td>
-                  <td className="p-4">{r.issue}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${priorityStyle[r.priority]}`}>{r.priority}</span>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[r.status]}`}>{r.status}</span>
-                  </td>
+        <div className="space-y-4">
+          {requests.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center text-gray-400">
+              No requests yet
+            </div>
+          ) : requests.map((r) => (
+            <div key={r._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
                   {user?.role !== 'resident' && (
-                    <td className="p-4">
-                      <select value={r.status} onChange={(e) => updateStatus(r._id, e.target.value)}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs">
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                      </select>
-                    </td>
+                    <p className="text-xs text-gray-400 mb-1">{r.residentId?.name} • Room {r.roomId?.roomNumber}</p>
                   )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  {user?.role === 'resident' && (
+                    <p className="text-xs text-gray-400 mb-1">Room {r.roomId?.roomNumber}</p>
+                  )}
+                  <p className="font-medium text-gray-800">{r.issue}</p>
+                  <div className="flex gap-2 mt-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${priorityStyle[r.priority]}`}>{r.priority}</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[r.status]}`}>{r.status}</span>
+                    {r.assignedTo?.name && (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                        Assigned: {r.assignedTo.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {user?.role !== 'resident' && (
+                  <div className="flex flex-col gap-2 items-end">
+                    <select value={r.status} onChange={(e) => updateStatus(r._id, e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs">
+                      <option value="pending">Pending</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                    {user?.role === 'admin' && (
+                      <select defaultValue="" onChange={(e) => assignStaff(r._id, e.target.value)}
+                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs">
+                        <option value="">Assign staff...</option>
+                        {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                      </select>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button onClick={() => setExpanded({ ...expanded, [r._id]: !expanded[r._id] })}
+                className="text-xs text-indigo-600 hover:underline mt-3">
+                {expanded[r._id] ? 'Hide' : 'Show'} progress notes ({r.updates?.length || 0})
+              </button>
+
+              {expanded[r._id] && (
+                <div className="mt-3 border-t border-gray-100 pt-3">
+                  {r.updates?.length > 0 ? (
+                    <ul className="space-y-2 mb-3">
+                      {r.updates.map((u, i) => (
+                        <li key={i} className="text-sm bg-gray-50 rounded-lg px-3 py-2">
+                          <p className="text-gray-700">{u.text}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{new Date(u.date).toLocaleString()}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-gray-400 mb-3">No progress notes yet</p>
+                  )}
+
+                  {user?.role !== 'resident' && (
+                    <div className="flex gap-2">
+                      <input value={noteDrafts[r._id] || ''}
+                        onChange={(e) => setNoteDrafts({ ...noteDrafts, [r._id]: e.target.value })}
+                        placeholder="Add a progress note..."
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                      <button onClick={() => addNote(r._id)}
+                        className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-700">
+                        Add
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

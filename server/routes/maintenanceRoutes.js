@@ -1,5 +1,6 @@
 const express = require('express');
 const MaintenanceRequest = require('../models/MaintenanceRequest');
+const User = require('../models/User');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -40,6 +41,16 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+// GET staff list for assignment dropdown (admin only)
+router.get('/staff-list', protect, authorize('admin'), async (req, res) => {
+  try {
+    const staff = await User.find({ role: 'staff' }).select('name email');
+    res.json(staff);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 // UPDATE request (staff/admin) - assign, change status, add update note
 router.put('/:id', protect, authorize('admin', 'staff'), async (req, res) => {
   try {
@@ -52,7 +63,11 @@ router.put('/:id', protect, authorize('admin', 'staff'), async (req, res) => {
     if (updateNote) request.updates.push({ text: updateNote });
 
     await request.save();
-    res.json(request);
+    const updated = await MaintenanceRequest.findById(request._id)
+      .populate('residentId', 'name email')
+      .populate('roomId', 'roomNumber')
+      .populate('assignedTo', 'name');
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
