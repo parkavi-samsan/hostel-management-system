@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://hostel-management-system-6e7v.onrender.com/api',
+  baseURL: import.meta.env.DEV
+    ? 'http://localhost:5000/api'
+    : 'https://hostel-management-system-6e7v.onrender.com/api',
 });
 
 api.interceptors.request.use((config) => {
