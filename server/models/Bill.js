@@ -7,8 +7,10 @@ const billSchema = new mongoose.Schema({
   utilities: { type: Number, default: 0 },
   additionalCharges: { type: Number, default: 0 },
   lateFee: { type: Number, default: 0 },
+  lateFeeApplied: { type: Boolean, default: false },
   discount: { type: Number, default: 0 },
   totalAmount: { type: Number, required: true },
+  dueDate: { type: Date },
   status: {
     type: String,
     enum: ['paid', 'unpaid', 'overdue'],
