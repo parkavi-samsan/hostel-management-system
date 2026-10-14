@@ -44,7 +44,8 @@ function Dashboard() {
       : []),
     { title: "Rooms", desc: "View and manage room allocation", icon: "🛏️", color: "from-blue-500 to-blue-600", path: "/rooms" },
     { title: "Maintenance", desc: "Track and update maintenance requests", icon: "🔧", color: "from-emerald-500 to-emerald-600", path: "/maintenance" },
-    { title: "Billing", desc: "Manage resident bills and payments", icon: "💰", color: "from-purple-500 to-purple-600", path: "/billing" }
+    { title: "Billing", desc: "Manage resident bills and payments", icon: "💰", color: "from-purple-500 to-purple-600", path: "/billing" },
+    { title: "My Profile", desc: "Edit details, emergency contact, room history", icon: "🙍", color: "from-pink-500 to-rose-600", path: "/profile" }
   ];
 
   const maintenanceData = stats
@@ -91,7 +92,6 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Statistics (admin/staff) */}
         {isManager && stats && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -156,7 +156,6 @@ function Dashboard() {
           </>
         )}
 
-        {/* Navigation cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {cards.map((c) => (
             <button

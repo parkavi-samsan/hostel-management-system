@@ -38,7 +38,12 @@ function Login() {
       localStorage.setItem("token", res.data.token);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      if (!err.response) {
+        setError("Cannot reach the server. Please try again.");
+      } else {
+        
+        setError(err.response.data?.msg || err.response.data?.message || err.response.data?.error || `Login failed (status ${err.response.status})`);
+      }
     }
   };
 

@@ -9,6 +9,7 @@ import Maintenance from "./pages/Maintenance";
 import Billing from "./pages/Billing";
 import Residents from "./pages/Residents";
 import Users from "./pages/Users";
+import Profile from "./pages/Profile";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -23,54 +24,13 @@ function App() {
           <Route path="/login" element={<Login />} />
 
           {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/rooms"
-            element={
-              <ProtectedRoute>
-                <Rooms />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/maintenance"
-            element={
-              <ProtectedRoute>
-                <Maintenance />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/billing"
-            element={
-              <ProtectedRoute>
-                <Billing />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/residents"
-            element={
-              <ProtectedRoute>
-                <Residents />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <Users />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/rooms" element={<ProtectedRoute><Rooms /></ProtectedRoute>} />
+          <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
+          <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
+          <Route path="/residents" element={<ProtectedRoute><Residents /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
           {/* Default fallback */}
           <Route path="*" element={<Home />} />

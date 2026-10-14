@@ -29,9 +29,10 @@ app.use("/api/billing", billingRoutes);
 app.use("/api/residents", residentRoutes);
 app.use("/api/stats", statsRoutes);
 
-// Test route
+// Test route (also reports database status)
 app.get("/api/test", (req, res) => {
-  res.json({ msg: "Backend working!" });
+  const states = ["disconnected", "connected", "connecting", "disconnecting"];
+  res.json({ msg: "Backend working!", db: states[mongoose.connection.readyState] });
 });
 
 // MongoDB connection

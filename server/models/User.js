@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const roomHistorySchema = new mongoose.Schema({
+  roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
+  roomNumber: { type: String },
+  checkIn: { type: Date, default: Date.now },
+  checkOut: { type: Date, default: null }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -12,6 +19,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   emergencyContact: { type: String },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', default: null },
+  roomHistory: [roomHistorySchema],
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
