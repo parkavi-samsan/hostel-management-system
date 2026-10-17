@@ -14,4 +14,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// If the token has expired (or the account no longer exists), send the user back to login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const onAuthPage = ['/login', '/register'].includes(window.location.pathname);
+    if (error.response?.status === 401 && !onAuthPage) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

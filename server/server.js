@@ -14,6 +14,11 @@ const maintenanceRoutes = require("./routes/maintenanceRoutes.js");
 const billingRoutes = require("./routes/billingRoutes.js");
 const residentRoutes = require("./routes/residentRoutes.js");
 const statsRoutes = require("./routes/statsRoutes.js");
+const notificationRoutes = require("./routes/notificationRoutes.js");
+const expenseRoutes = require("./routes/expenseRoutes.js");
+const reportRoutes = require("./routes/reportRoutes.js");
+const adminRoutes = require("./routes/adminRoutes.js");
+const { startScheduler } = require("./utils/scheduler.js");
 
 const app = express();
 
@@ -28,6 +33,10 @@ app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/residents", residentRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Test route (also reports database status)
 app.get("/api/test", (req, res) => {
@@ -41,11 +50,14 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    startScheduler();
+  })
   .catch((err) => console.error("❌ MongoDB connection error:", err.message));
 
 // Server start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+});  

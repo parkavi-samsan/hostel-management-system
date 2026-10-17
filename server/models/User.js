@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema({
   emergencyContact: { type: String },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', default: null },
   roomHistory: [roomHistorySchema],
+  roomPreference: {
+    roomType: { type: String, enum: ['', 'single', 'double', 'dorm'], default: '' },
+    notes: { type: String, default: '' }
+  },
+  notifyEmail: { type: Boolean, default: true },
+  notifySms: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 

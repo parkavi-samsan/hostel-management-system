@@ -37,7 +37,7 @@ function Residents() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
           <h2 className="font-semibold text-gray-800 mb-1">Total Residents: {residents.length}</h2>
-          <p className="text-sm text-gray-500">All registered residents in the hostel</p>
+          <p className="text-sm text-gray-500">All registered residents in the hostel. Click a name to open the full record.</p>
         </div>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -49,18 +49,26 @@ function Residents() {
                 <th className="p-4">Name</th>
                 <th className="p-4">Email</th>
                 <th className="p-4">Phone</th>
-                <th className="p-4">Resident ID</th>
+                <th className="p-4">Room</th>
+                <th className="p-4">Preference</th>
+                <th className="p-4"></th>
               </tr>
             </thead>
             <tbody>
               {residents.length === 0 ? (
-                <tr><td colSpan="4" className="p-6 text-center text-gray-400">No residents registered yet</td></tr>
+                <tr><td colSpan="6" className="p-6 text-center text-gray-400">No residents registered yet</td></tr>
               ) : residents.map((r) => (
                 <tr key={r._id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="p-4 font-medium">{r.name}</td>
+                  <td className="p-4 font-medium">
+                    <Link to={`/residents/${r._id}`} className="text-indigo-700 hover:underline">{r.name}</Link>
+                  </td>
                   <td className="p-4">{r.email}</td>
                   <td className="p-4">{r.phone || '-'}</td>
-                  <td className="p-4 text-xs text-gray-400">{r._id}</td>
+                  <td className="p-4">{r.roomId?.roomNumber || <span className="text-gray-400">Not allocated</span>}</td>
+                  <td className="p-4 capitalize">{r.roomPreference?.roomType || <span className="text-gray-400 normal-case">-</span>}</td>
+                  <td className="p-4">
+                    <Link to={`/residents/${r._id}`} className="text-xs text-blue-600 hover:underline">View</Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

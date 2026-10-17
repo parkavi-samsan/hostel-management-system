@@ -7,7 +7,10 @@ function Profile() {
   const { user, login, logout } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', emergencyContact: '' });
+  const [form, setForm] = useState({
+    name: '', phone: '', emergencyContact: '',
+    roomType: '', roomNotes: '', notifyEmail: true, notifySms: false
+  });
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -19,7 +22,11 @@ function Profile() {
       setForm({
         name: res.data.name || '',
         phone: res.data.phone || '',
-        emergencyContact: res.data.emergencyContact || ''
+        emergencyContact: res.data.emergencyContact || '',
+        roomType: res.data.roomPreference?.roomType || '',
+        roomNotes: res.data.roomPreference?.notes || '',
+        notifyEmail: res.data.notifyEmail !== false,
+        notifySms: res.data.notifySms === true
       });
     } catch (err) {
       setError('Failed to load profile');
@@ -28,7 +35,10 @@ function Profile() {
 
   useEffect(() => { loadProfile(); }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+  };
 
   const validate = () => {
     const errs = {};
@@ -37,6 +47,7 @@ function Profile() {
     if (form.emergencyContact && !/^[0-9]{10}$/.test(form.emergencyContact)) {
       errs.emergencyContact = 'Enter a valid 10-digit emergency contact number';
     }
+    if (form.notifySms && !form.phone) errs.phone = 'Add your phone number to receive SMS alerts';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -47,7 +58,14 @@ function Profile() {
     setMessage('');
     if (!validate()) return;
     try {
-      const res = await api.put('/auth/me', form);
+      const res = await api.put('/auth/me', {
+        name: form.name,
+        phone: form.phone,
+        emergencyContact: form.emergencyContact,
+        roomPreference: { roomType: form.roomType, notes: form.roomNotes },
+        notifyEmail: form.notifyEmail,
+        notifySms: form.notifySms
+      });
       login({ ...user, name: res.data.name }, localStorage.getItem('token'));
       setMessage('Profile updated successfully');
       loadProfile();
@@ -118,6 +136,39 @@ function Profile() {
                 <input name="emergencyContact" value={form.emergencyContact} onChange={handleChange} placeholder="10-digit number"
                   className={`w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${fieldErrors.emergencyContact ? 'border-red-400 focus:ring-red-300' : 'border-gray-300 focus:ring-indigo-400'}`} />
                 {fieldErrors.emergencyContact && <p className="text-red-500 text-xs mt-1">{fieldErrors.emergencyContact}</p>}
+              </div>
+
+              {profile.role === 'resident' && (
+                <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Preferred Room Type</label>
+                    <select name="roomType" value={form.roomType} onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                      <option value="">No preference</option>
+                      <option value="single">Single</option>
+                      <option value="double">Double</option>
+                      <option value="dorm">Dorm</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Preference Notes</label>
+                    <input name="roomNotes" value={form.roomNotes} onChange={handleChange} placeholder="e.g. ground floor, near window"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6 border border-gray-100 rounded-lg p-4 bg-gray-50">
+                <p className="text-sm font-medium text-gray-700 mb-2">Alert settings</p>
+                <label className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                  <input type="checkbox" name="notifyEmail" checked={form.notifyEmail} onChange={handleChange} />
+                  Email me about bills, maintenance and room updates
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input type="checkbox" name="notifySms" checked={form.notifySms} onChange={handleChange} />
+                  Also send SMS alerts to my phone
+                </label>
+                <p className="text-xs text-gray-400 mt-2">In-app notifications (the bell) are always on.</p>
               </div>
 
               <button type="submit" className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition">

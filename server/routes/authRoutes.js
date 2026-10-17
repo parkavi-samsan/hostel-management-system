@@ -9,7 +9,14 @@ const router = express.Router();
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, role, phone, emergencyContact } = req.body;
+    const { name, email, password, phone, emergencyContact } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ msg: "Name, email and password are required" });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ msg: "Password must be at least 6 characters" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -22,7 +29,7 @@ router.post("/register", async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: role || "resident",
+      role: "resident", // roles can only be changed by an admin
       phone,
       emergencyContact,
     });
@@ -74,15 +81,21 @@ router.get("/me", protect, async (req, res) => {
   }
 });
 
-// UPDATE own profile (resident can edit name, phone, emergencyContact)
+// UPDATE own profile (name, phone, emergency contact, room preference, alert settings)
 router.put("/me", protect, async (req, res) => {
   try {
-    const { name, phone, emergencyContact } = req.body;
-    const updated = await User.findByIdAndUpdate(
-      req.user.id,
-      { name, phone, emergencyContact },
-      { new: true }
-    ).select("-password");
+    const { name, phone, emergencyContact, roomPreference, notifyEmail, notifySms } = req.body;
+    const update = { name, phone, emergencyContact };
+    if (roomPreference) {
+      update.roomPreference = {
+        roomType: ["single", "double", "dorm"].includes(roomPreference.roomType) ? roomPreference.roomType : "",
+        notes: String(roomPreference.notes || "").slice(0, 300),
+      };
+    }
+    if (typeof notifyEmail === "boolean") update.notifyEmail = notifyEmail;
+    if (typeof notifySms === "boolean") update.notifySms = notifySms;
+
+    const updated = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select("-password");
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -108,6 +121,9 @@ router.put("/users/:id/role", protect, authorize("admin"), async (req, res) => {
     if (!["admin", "staff", "resident"].includes(role)) {
       return res.status(400).json({ msg: "Invalid role" });
     }
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ msg: "You cannot change your own role" });
+    }
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select("-password");
     res.json(user);
   } catch (err) {
@@ -119,6 +135,9 @@ router.put("/users/:id/role", protect, authorize("admin"), async (req, res) => {
 router.put("/users/:id/status", protect, authorize("admin"), async (req, res) => {
   try {
     const { isActive } = req.body;
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ msg: "You cannot deactivate your own account" });
+    }
     const user = await User.findByIdAndUpdate(req.params.id, { isActive }, { new: true }).select("-password");
     res.json(user);
   } catch (err) {

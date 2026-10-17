@@ -235,8 +235,20 @@ function Rooms() {
                                 <option value="">Select resident</option>
                                 {residents
                                   .filter((r) => !room.occupants.some((o) => o._id === r._id))
-                                  .map((r) => <option key={r._id} value={r._id}>{r.name}</option>)}
+                                  .map((r) => (
+                                    <option key={r._id} value={r._id}>
+                                      {r.name}{r.roomPreference?.roomType ? ` (prefers ${r.roomPreference.roomType})` : ''}
+                                    </option>
+                                  ))}
                               </select>
+                              {(() => {
+                                const chosen = residents.find((r) => r._id === selectedResident);
+                                const want = chosen?.roomPreference?.roomType;
+                                if (!want) return null;
+                                return want === room.type
+                                  ? <p className="text-xs text-green-600">✔ Matches their preferred room type</p>
+                                  : <p className="text-xs text-amber-600">Prefers a {want} room (this is {room.type})</p>;
+                              })()}
                               <div className="flex gap-1">
                                 <button onClick={handleCheckIn} className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Confirm</button>
                                 <button onClick={() => { setCheckInRoom(null); setSelectedResident(''); }} className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">Cancel</button>

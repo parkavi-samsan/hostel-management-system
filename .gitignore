@@ -2,3 +2,6 @@
 **/.env
 **/.env.*
 !.env.example
+server/backups/
+*.zip
+notepad*

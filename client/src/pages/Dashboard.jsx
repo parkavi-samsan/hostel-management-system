@@ -36,10 +36,14 @@ function Dashboard() {
   };
 
   const cards = [
+    ...(isManager
+      ? [{ title: "Residents", desc: "View and manage resident records", icon: "👤", color: "from-orange-500 to-orange-600", path: "/residents" }]
+      : []),
     ...(user?.role === "admin"
       ? [
-          { title: "Residents", desc: "View all registered residents", icon: "👤", color: "from-orange-500 to-orange-600", path: "/residents" },
-          { title: "User Management", desc: "Manage roles and account status", icon: "⚙️", color: "from-slate-600 to-slate-700", path: "/users" }
+          { title: "Expenses", desc: "Record and track hostel expenses", icon: "🧾", color: "from-red-500 to-red-600", path: "/expenses" },
+          { title: "Reports", desc: "Revenue, expenses and occupancy trends", icon: "📊", color: "from-cyan-500 to-cyan-600", path: "/reports" },
+          { title: "User Management", desc: "Roles, account status and data backup", icon: "⚙️", color: "from-slate-600 to-slate-700", path: "/users" }
         ]
       : []),
     { title: "Rooms", desc: "View and manage room allocation", icon: "🛏️", color: "from-blue-500 to-blue-600", path: "/rooms" },

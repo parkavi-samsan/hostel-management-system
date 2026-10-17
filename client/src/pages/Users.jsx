@@ -9,6 +9,8 @@ function Users() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [backups, setBackups] = useState([]);
+  const [backingUp, setBackingUp] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -19,7 +21,49 @@ function Users() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  const fetchBackups = async () => {
+    try {
+      const res = await api.get('/admin/backup/list');
+      setBackups(res.data);
+    } catch (err) {
+      // the list is a nice-to-have; ignore failures
+    }
+  };
+
+  useEffect(() => { fetchUsers(); fetchBackups(); }, []);
+
+  // The route needs the login token, so the file is fetched with axios and saved from a blob
+  const downloadBackup = async () => {
+    setError('');
+    try {
+      const res = await api.get('/admin/backup', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `hostel-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setMessage('Backup downloaded');
+      setTimeout(() => setMessage(''), 2500);
+    } catch (err) {
+      setError('Failed to download the backup');
+    }
+  };
+
+  const saveBackupOnServer = async () => {
+    setError('');
+    setBackingUp(true);
+    try {
+      const res = await api.post('/admin/backup/save');
+      setMessage(res.data.message);
+      setTimeout(() => setMessage(''), 2500);
+      fetchBackups();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save the backup');
+    } finally {
+      setBackingUp(false);
+    }
+  };
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -116,6 +160,29 @@ function Users() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+          <h2 className="font-semibold text-gray-800 mb-1">💾 Data Backup</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Download a full copy of the data (passwords are never included). The server also saves an automatic backup once a day and keeps the latest 7.
+          </p>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <button onClick={downloadBackup} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+              Download backup (JSON)
+            </button>
+            <button onClick={saveBackupOnServer} disabled={backingUp}
+              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-50">
+              {backingUp ? 'Saving...' : 'Save backup on server now'}
+            </button>
+          </div>
+          {backups.length > 0 && (
+            <ul className="text-xs text-gray-500 space-y-1">
+              {backups.map((b) => (
+                <li key={b.name}>{b.name} · {(b.size / 1024).toFixed(1)} KB · {new Date(b.createdAt).toLocaleString('en-IN')}</li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
