@@ -1,12 +1,14 @@
 const nodemailer = require('nodemailer');
 
-// Two ways to send email, chosen by which environment variables exist:
-//  1. Brevo HTTP API (BREVO_API_KEY + BREVO_SENDER_EMAIL) - works on hosts that block SMTP ports, like Render's free tier
-//  2. SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS) - fine for local development
-// With neither, emails are skipped (and logged) so the app still works.
+// Ways to send email, chosen by which environment variables exist (first match wins):
+//  1. Resend HTTP API (RESEND_API_KEY) - works on hosts that block SMTP ports, like Render's free tier
+//  2. Brevo HTTP API (BREVO_API_KEY + BREVO_SENDER_EMAIL)
+//  3. SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS) - fine for local development
+// With none of them, emails are skipped (and logged) so the app still works.
+const resendEnabled = () => Boolean(process.env.RESEND_API_KEY);
 const brevoEnabled = () => Boolean(process.env.BREVO_API_KEY && process.env.BREVO_SENDER_EMAIL);
 const smtpEnabled = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
-const emailEnabled = () => brevoEnabled() || smtpEnabled();
+const emailEnabled = () => resendEnabled() || brevoEnabled() || smtpEnabled();
 
 let transporter = null;
 function getTransporter() {
@@ -29,6 +31,25 @@ const buildHtml = (text) => `<div style="font-family:Arial,sans-serif;max-width:
         <p style="font-size:15px;color:#111827">${escapeHtml(text)}</p>
         <p style="font-size:12px;color:#9ca3af;margin-top:24px">This is an automated message. Log in to the portal for details.</p>
       </div>`;
+
+async function sendWithResend(to, subject, text) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      // Without a verified domain, Resend only allows onboarding@resend.dev
+      from: process.env.RESEND_FROM || 'Hostel Management <onboarding@resend.dev>',
+      to: [to],
+      subject,
+      text,
+      html: buildHtml(text)
+    })
+  });
+  if (!res.ok) throw new Error(`Resend API ${res.status}: ${await res.text()}`);
+}
 
 async function sendWithBrevo(to, subject, text) {
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -67,7 +88,8 @@ async function sendEmail(to, subject, text) {
     return false;
   }
   try {
-    if (brevoEnabled()) await sendWithBrevo(to, subject, text);
+    if (resendEnabled()) await sendWithResend(to, subject, text);
+    else if (brevoEnabled()) await sendWithBrevo(to, subject, text);
     else await sendWithSmtp(to, subject, text);
     return true;
   } catch (err) {
