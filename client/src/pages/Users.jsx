@@ -50,6 +50,20 @@ function Users() {
     }
   };
 
+  const sendTestEmail = async () => {
+    const to = window.prompt('Send a test email to which address?');
+    if (!to) return;
+    setError('');
+    setMessage('Sending test email...');
+    try {
+      const res = await api.post('/admin/test-email', { to });
+      setMessage(res.data.message);
+    } catch (err) {
+      setMessage('');
+      setError(err.response?.data?.message || 'Failed to send the test email');
+    }
+  };
+
   const saveBackupOnServer = async () => {
     setError('');
     setBackingUp(true);
@@ -174,6 +188,10 @@ function Users() {
             <button onClick={saveBackupOnServer} disabled={backingUp}
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-50">
               {backingUp ? 'Saving...' : 'Save backup on server now'}
+            </button>
+            <button onClick={sendTestEmail}
+              className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-100 transition">
+              Send test email
             </button>
           </div>
           {backups.length > 0 && (

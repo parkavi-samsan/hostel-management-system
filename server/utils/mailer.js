@@ -81,21 +81,28 @@ async function sendWithSmtp(to, subject, text) {
 }
 
 // Never throws: a failed email must not break the request that triggered it.
-async function sendEmail(to, subject, text) {
-  if (!to) return false;
+// Returns { ok, via, error } so callers (like the admin "test email" button) can show what happened.
+async function sendEmailDetailed(to, subject, text) {
+  if (!to) return { ok: false, error: 'No recipient address' };
   if (!emailEnabled()) {
     console.log(`[email skipped - no email service configured] to=${to} subject="${subject}"`);
-    return false;
+    return { ok: false, error: 'No email service configured' };
   }
   try {
-    if (resendEnabled()) await sendWithResend(to, subject, text);
-    else if (brevoEnabled()) await sendWithBrevo(to, subject, text);
-    else await sendWithSmtp(to, subject, text);
-    return true;
+    let via;
+    if (resendEnabled()) { via = 'Resend'; await sendWithResend(to, subject, text); }
+    else if (brevoEnabled()) { via = 'Brevo'; await sendWithBrevo(to, subject, text); }
+    else { via = 'SMTP'; await sendWithSmtp(to, subject, text); }
+    console.log(`📧 Email sent via ${via} to ${to}`);
+    return { ok: true, via };
   } catch (err) {
     console.error('Email error:', err.message);
-    return false;
+    return { ok: false, error: err.message };
   }
 }
 
-module.exports = { sendEmail, emailEnabled };
+async function sendEmail(to, subject, text) {
+  return (await sendEmailDetailed(to, subject, text)).ok;
+}
+
+module.exports = { sendEmail, sendEmailDetailed, emailEnabled };
