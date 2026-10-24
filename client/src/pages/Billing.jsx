@@ -361,7 +361,7 @@ function Billing() {
           <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 mb-4">
             Online payments are processed securely by Razorpay.
             {gateway.keyId?.startsWith('rzp_test') &&
-              ' Test mode: use card 4111 1111 1111 1111, any future expiry date and any CVV.'}
+            ' Test mode: choose Netbanking, pick any bank and click Success (or UPI with success@razorpay if shown).'}
           </p>
         )}
 
